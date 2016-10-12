@@ -5,7 +5,7 @@ ABS_PATH=`pwd`
 cd -
 
 if [ ! -x ${ABS_PATH}/go-aws-mon ]; then
-    wget -O ${ABS_PATH}/go-aws-mon https://github.com/a3linux/go-aws-mon/raw/master/bin/go-aws-mon
+    wget -O ${ABS_PATH}/go-aws-mon https://github.com/tongueroo/go-aws-mon/raw/master/bin/go-aws-mon
     chmod +x ${ABS_PATH}/go-aws-mon
 fi
 
@@ -13,6 +13,6 @@ fi
 # #######################################################################
 export AWS_ACCESS_KEY_ID=
 export AWS_SECRET_ACCESS_KEY=
-${ABS_PATH}/go-aws-mon --mem-used --mem-avail --disk-space-used --disk-space-avail --disk-inode-util
+${ABS_PATH}/go-aws-mon --mem-avail --disk-space-avail
 # #######################################################################
 

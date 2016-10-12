@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
@@ -8,9 +9,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
+	"github.com/davecgh/go-spew/spew"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os/exec"
 )
 
 func getDimensions(metadata map[string]string) (ret []*cloudwatch.Dimension) {
@@ -60,6 +63,28 @@ func getDimensions(metadata map[string]string) (ret []*cloudwatch.Dimension) {
 	return _ret
 }
 
+// grep ECS_CLUSTER /etc/ecs/ecs.config | awk '{print $2}' FS='='
+func getClusterDimensions() (ret []*cloudwatch.Dimension) {
+	var _ret []*cloudwatch.Dimension
+
+	out, err := exec.Command("grep", "ECS_CLUSTER", "/etc/ecs/ecs.config").Output()
+	if err != nil {
+		log.Fatal("Could not grep ecs.config file")
+	}
+
+	sep := []byte("=")
+	words := bytes.Split(out, sep)
+	cluster := bytes.TrimSpace(words[1])
+
+	dim := cloudwatch.Dimension{
+		Name:  aws.String("Cluster"),
+		Value: aws.String(string(cluster)),
+	}
+	_ret = append(_ret, &dim)
+
+	return _ret
+}
+
 func addMetric(name, unit string, value float64, dimensions []*cloudwatch.Dimension, metricData []*cloudwatch.MetricDatum) (ret []*cloudwatch.MetricDatum, err error) {
 	_metric := cloudwatch.MetricDatum{
 		MetricName: aws.String(name),
@@ -68,7 +93,26 @@ func addMetric(name, unit string, value float64, dimensions []*cloudwatch.Dimens
 		Dimensions: dimensions,
 	}
 	metricData = append(metricData, &_metric)
+
+	// Also add the Cluster metric
+	clusterDimensions := getClusterDimensions()
+	_metricCluster := cloudwatch.MetricDatum{
+		MetricName: aws.String(name),
+		Unit:       aws.String(unit),
+		Value:      aws.Float64(value),
+		Dimensions: clusterDimensions,
+	}
+	metricData = append(metricData, &_metricCluster)
+
 	return metricData, nil
+}
+
+// for debugging
+func dumpMetrics(metricdata []*cloudwatch.MetricDatum, namespace, region string) error {
+	spew.Dump(metricdata)
+	spew.Dump(namespace)
+	spew.Dump(region)
+	return nil
 }
 
 func putMetric(metricdata []*cloudwatch.MetricDatum, namespace, region string) error {

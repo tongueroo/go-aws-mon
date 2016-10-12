@@ -31,3 +31,9 @@ _PATH_, multiple paths are supported by comma(,) saperate, e.x. /,/var,/home
 * We recommend to change the bin/mon-put-instance-metric.sh to setup a cron job
 
 Allen Chen(a3linux X gmail.com)
+
+## Building
+
+```
+env GOOS=linux go build -o bin/go-aws-mon
+```
