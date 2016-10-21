@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"log"
 	"os"
@@ -107,4 +108,5 @@ func main() {
 	if err != nil {
 		log.Fatal("Can't put CloudWatch Metric")
 	}
+	fmt.Println("CloudWatch Metrics sent")
 }
